@@ -1,9 +1,6 @@
 hash-table-using-linked-list-chaining
 
-Hash table for storing unique integer values
-Maximum load factor 0.75 (buckets/bucketsMax)
-No limit on chain length
+The simplest possible hash table for storing unique integer values as linked lists.
 
-The average search length should be the number of stored values divided by 2 * NrOfBuckets 
-
-
+The average search length should be the number of stored values divided by two times the number of buckets.
+To reduce the search length, increase the number of buckets which in turn reduces the number of linked list nodes.
