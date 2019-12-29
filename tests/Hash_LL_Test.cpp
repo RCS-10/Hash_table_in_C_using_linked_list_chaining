@@ -1,14 +1,12 @@
 extern "C"
 {
 #include "Hash_LL.h"
-#include <time.h>
-#include <stdlib.h>
 }
 
 #include "CppUTest/TestHarness.h"
 // https://github.com/cpputest/cpputest
 
-TEST_GROUP(None)
+TEST_GROUP(ASCENDING)
 {
   	hashTable *ht;
 	
@@ -26,13 +24,13 @@ TEST_GROUP(None)
 };
 
 #if 1
-TEST(None, CreateFailsWhenPassingNullPointer)
+TEST(ASCENDING, CreateFailsWhenPassingNullPointer)
 {
 	CHECK_FALSE(Hash_Create(NULL, 100));
 }
 #endif
 #if 1
-TEST(None, CreateFailsWhenPassingZeroOrNegativeSize)
+TEST(ASCENDING, CreateFailsWhenPassingZeroOrNegativeSize)
 {
 	hashTable *t;
 	CHECK_FALSE(Hash_Create(&t, 0));
@@ -40,7 +38,7 @@ TEST(None, CreateFailsWhenPassingZeroOrNegativeSize)
 }
 #endif
 #if 1
-TEST(None, CreateDoesNotCrash)
+TEST(ASCENDING, CreateDoesNotCrash)
 {
 	hashTable *t;
 	CHECK(Hash_Create(&t, 100));
@@ -48,7 +46,7 @@ TEST(None, CreateDoesNotCrash)
 }
 #endif
 #if 1
-TEST(None, CreateAndDestroyAssignsToPointer)
+TEST(ASCENDING, CreateAndDestroyAssignsToPointer)
 {
 	hashTable *t;
 	CHECK(Hash_Create(&t, 100));
@@ -58,14 +56,14 @@ TEST(None, CreateAndDestroyAssignsToPointer)
 }
 #endif
 #if 1
-TEST(None, EmptyHasNoValuesAndNoBuckets)
+TEST(ASCENDING, NoValuesAndNoBucketsOnCreation)
 {
 	LONGS_EQUAL(0, Hash_ValuesStored(ht));
 	LONGS_EQUAL(0, Hash_BucketsUsed(ht));
 }
 #endif
 #if 1
-TEST(None, BucketsMaxDeterminedByInitialization)
+TEST(ASCENDING, MaxBucketsDeterminedByInitialization)
 {
 	hashTable *t;
 	CHECK(Hash_Create(&t, 10));
@@ -77,13 +75,13 @@ TEST(None, BucketsMaxDeterminedByInitialization)
 }
 #endif
 #if 1
-TEST(None, LoadFactorIsZeroWhenEmpty)
+TEST(ASCENDING, LoadFactorIsZeroOnCreation)
 {
 	DOUBLES_EQUAL(0, Hash_LoadFactor(ht), 0.01);
 }
 #endif
 #if 1
-TEST(None, FunctionsReturnZeroWhenPassedNull)
+TEST(ASCENDING, FunctionsReturnZeroWhenPassedNull)
 {
 	CHECK_FALSE(Hash_Insert(NULL, 1));
 	CHECK_FALSE(Hash_Exists(NULL, 1));
@@ -166,7 +164,7 @@ TEST(One, CannotInsertTheSameValueTwice)
 }
 #endif
 #if 1
-TEST(None, LoadFactorIsBucketsUsedDividedByBucketsMax)
+TEST(One, LoadFactorIsBucketsUsedDividedByBucketsMax)
 {
 	CHECK(Hash_Insert(ht, 1));
 	DOUBLES_EQUAL(1.0/100, Hash_LoadFactor(ht), 0.001);
@@ -178,7 +176,7 @@ TEST(None, LoadFactorIsBucketsUsedDividedByBucketsMax)
 TEST_GROUP(Many)
 {
   	hashTable *ht;
-  	#define SIZE 100
+  	const int SIZE = 100;
 	
   	void setup()
   	{
@@ -192,15 +190,15 @@ TEST_GROUP(Many)
 		POINTERS_EQUAL(NULL, ht);
   	}
 
-  	enum {NONE = 0, REVERSE = 1, NEGATE = 2};
+  	enum {ASCENDING = 1, DESCENDING = 0, NEGATE = 2};
 
-  	void insertMany(int howMany, int modifier)
+  	void insertMany(int howMany, int mode)
 	{
-		if(!(modifier & REVERSE))
+		if(mode & ASCENDING)
 		{
 			for(int i = 0; i < howMany; ++i)
 			{
-				if(!(modifier & NEGATE))
+				if(!(mode & NEGATE))
 					CHECK(Hash_Insert(ht, i));
 				else
 					CHECK_FALSE(Hash_Insert(ht, i));
@@ -210,7 +208,7 @@ TEST_GROUP(Many)
 		{
 			for(int i = howMany - 1; i >= 0; --i)
 			{
-				if(!(modifier & NEGATE))
+				if(!(mode & NEGATE))
 					CHECK(Hash_Insert(ht, i));
 				else
 					CHECK_FALSE(Hash_Insert(ht, i));
@@ -218,13 +216,13 @@ TEST_GROUP(Many)
 		}
 	}
 
-  	void existsMany(int howMany, int modifier)
+  	void existsMany(int howMany, int mode)
 	{
-		if(!(modifier & REVERSE))
+		if(mode & ASCENDING)
 		{
 			for(int i = 0; i < howMany; ++i)
 			{
-				if(!(modifier & NEGATE))
+				if(!(mode & NEGATE))
 					CHECK(Hash_Exists(ht, i));
 				else
 					CHECK_FALSE(Hash_Exists(ht, i));
@@ -234,7 +232,7 @@ TEST_GROUP(Many)
 		{
 			for(int i = howMany - 1; i >= 0; --i)
 			{
-				if(!(modifier & NEGATE))
+				if(!(mode & NEGATE))
 					CHECK(Hash_Exists(ht, i));
 				else
 					CHECK_FALSE(Hash_Exists(ht, i));
@@ -242,13 +240,13 @@ TEST_GROUP(Many)
 		}
 	}
 
-  	void removeMany(int howMany, int modifier)
+  	void removeMany(int howMany, int mode)
 	{
-		if(!(modifier & REVERSE))
+		if(mode & ASCENDING)
 		{
 			for(int i = 0; i < howMany; ++i)
 			{
-				if(!(modifier & NEGATE))
+				if(!(mode & NEGATE))
 					CHECK(Hash_Remove(ht, i));
 				else
 					CHECK_FALSE(Hash_Remove(ht, i));
@@ -258,7 +256,7 @@ TEST_GROUP(Many)
 		{
 			for(int i = howMany - 1; i >= 0; --i)
 			{
-				if(!(modifier & NEGATE))
+				if(!(mode & NEGATE))
 					CHECK(Hash_Remove(ht, i));
 				else
 					CHECK_FALSE(Hash_Remove(ht, i));
@@ -270,8 +268,8 @@ TEST_GROUP(Many)
 #if 1
 TEST(Many, CanFillAllBuckets)
 {
-	insertMany(SIZE, NONE);
-	existsMany(SIZE, NONE);
+	insertMany(SIZE, ASCENDING);
+	existsMany(SIZE, ASCENDING);
 	LONGS_EQUAL(SIZE, Hash_ValuesStored(ht));
 	LONGS_EQUAL(SIZE, Hash_BucketsUsed(ht));
 	DOUBLES_EQUAL(1.00, Hash_LoadFactor(ht), 0.01);
@@ -280,8 +278,8 @@ TEST(Many, CanFillAllBuckets)
 #if 1
 TEST(Many, DuplicatesRejected)
 {
-	insertMany(SIZE, NONE);
-	existsMany(SIZE, REVERSE);
+	insertMany(SIZE, ASCENDING);
+	existsMany(SIZE, DESCENDING);
 	insertMany(SIZE, NEGATE);
 	LONGS_EQUAL(SIZE, Hash_ValuesStored(ht));
 	LONGS_EQUAL(SIZE, Hash_BucketsUsed(ht));
@@ -291,7 +289,7 @@ TEST(Many, DuplicatesRejected)
 #if 1
 TEST(Many, CanInsertTwiceAsManyValuesAsThereAreBuckets)
 {
-	insertMany(2 * SIZE, NONE);
+	insertMany(2 * SIZE, ASCENDING);
 	LONGS_EQUAL(2 * SIZE, Hash_ValuesStored(ht));
 	LONGS_EQUAL(SIZE, Hash_BucketsUsed(ht));
 	DOUBLES_EQUAL(1.00, Hash_LoadFactor(ht), 0.01);
@@ -300,9 +298,9 @@ TEST(Many, CanInsertTwiceAsManyValuesAsThereAreBuckets)
 #if 1
 TEST(Many, CanFillAndDeleteAllBuckets)
 {
-	insertMany(SIZE, NONE);
-	existsMany(SIZE, NONE);
-	removeMany(SIZE, NONE);
+	insertMany(SIZE, ASCENDING);
+	existsMany(SIZE, ASCENDING);
+	removeMany(SIZE, ASCENDING);
 
 	existsMany(SIZE, NEGATE);
 	removeMany(SIZE, NEGATE);
@@ -317,11 +315,11 @@ TEST(Many, CanFillAndDeleteAllBucketsRepeatedly)
 {
 	for(int i = 0; i < 10; ++i)
 	{
-		insertMany(SIZE, REVERSE);
-		existsMany(SIZE, REVERSE);
-		removeMany(SIZE, REVERSE);
-		existsMany(SIZE, REVERSE | NEGATE);
-		removeMany(SIZE, REVERSE | NEGATE);
+		insertMany(SIZE, DESCENDING);
+		existsMany(SIZE, DESCENDING);
+		removeMany(SIZE, DESCENDING);
+		existsMany(SIZE, DESCENDING | NEGATE);
+		removeMany(SIZE, DESCENDING | NEGATE);
 		LONGS_EQUAL(0, Hash_ValuesStored(ht));
 		LONGS_EQUAL(0, Hash_BucketsUsed(ht));
 		DOUBLES_EQUAL(0, Hash_LoadFactor(ht), 0.01);
@@ -385,5 +383,91 @@ TEST(Many, HowNotToMakeATestCase)
 		CHECK_FALSE(Hash_Exists(ht, i));		// Even values do not exist
 		CHECK_FALSE(Hash_Exists(ht, i + 1));	// Odd values do not exist
 	}
+}
+#endif
+
+
+TEST_GROUP(Print) // Not using spy - visual inspection only
+{
+  	hashTable *ht;
+
+  	const int SIZE = 20;
+	
+  	void setup()
+  	{
+		CHECK(Hash_Create(&ht, SIZE));
+		CHECK(ht);
+  	}
+
+  	void teardown()
+  	{
+		Hash_Destroy(&ht);
+		POINTERS_EQUAL(NULL, ht);
+  	}
+};
+
+#if 0
+TEST(Print, EmptyHash)
+{
+	Hash_Print(ht, true);
+}
+#endif
+#if 0
+TEST(Print, PrintOne)
+{
+	Hash_Insert(ht, 1);
+	Hash_Print(ht, true);
+}
+#endif
+#if 0
+TEST(Print, InsertSomeRemoveSome)
+{
+	Hash_Print(ht, true);
+	Hash_Insert(ht, 1);
+	Hash_Insert(ht, 1 + SIZE);
+	Hash_Insert(ht, 1 + 2 * SIZE);
+	Hash_Insert(ht, 1 + 3 * SIZE);
+	Hash_Print(ht, true);
+	Hash_Remove(ht, 1 + SIZE);
+	Hash_Print(ht, true);
+	Hash_Remove(ht, 1 + 3 * SIZE);
+	Hash_Print(ht, true);
+	Hash_Remove(ht, 1);
+	Hash_Print(ht, true);
+	Hash_Remove(ht, 1 + 2 * SIZE);
+	Hash_Print(ht, true);
+}
+#endif
+#if 0
+TEST(Print, AllBucketsFilled)
+{
+	for(int i = 0; i < SIZE; ++i)
+	{
+		Hash_Insert(ht, i);
+	}
+
+	Hash_Print(ht, true);
+}
+#endif
+#if 0
+TEST(Print, EvenBucketsFilled)
+{
+	for(int i = 0; i < SIZE; i += 2)
+	{
+		Hash_Insert(ht, i);
+	}
+
+	Hash_Print(ht, false);
+}
+#endif
+#if 1
+TEST(Print, EveryBucketFilledWithTenValues)
+{
+	for(int i = 0; i < 10 * SIZE; ++i)
+	{
+		Hash_Insert(ht, i);
+	}
+
+	Hash_Print(ht, true);
 }
 #endif

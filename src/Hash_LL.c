@@ -1,5 +1,6 @@
 #include "Hash_LL.h"
 #include <assert.h>
+#include <stdio.h>
 
 typedef struct node
 {
@@ -217,3 +218,45 @@ double Hash_LoadFactor(table *ht)
 	return (double)ht->bucketsUsed / ht->bucketsMax;
 }
 
+void Hash_Print(table *ht, bool ignoreEmptyBuckets)
+{
+	if(!ht)
+	{
+		return;
+	}
+
+	if(ignoreEmptyBuckets && 0 == ht->bucketsUsed)
+	{
+		printf("[ ]:\n");
+		return;
+	}
+
+	size_t bucketsMax = ht->bucketsMax;
+	node **array = ht->array;
+
+	for(size_t i = 0; i < bucketsMax; ++i)
+	{
+		if(array[i])
+		{
+			printf("[%ld]: ", i);
+			node *curr = array[i];
+			while(curr)
+			{
+				printf("%d ", curr->value);
+				curr = curr->next;
+			}
+			printf("\n");
+		}
+		else
+		{
+			if(!ignoreEmptyBuckets)
+			{
+				printf("[%ld]:\n", i);
+			}
+		}
+	}
+	if(!ignoreEmptyBuckets)
+	{
+		printf("\n");
+	}
+}

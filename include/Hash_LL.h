@@ -18,7 +18,6 @@ size_t Hash_BucketsUsed(table*);
 size_t Hash_BucketsMax(table*);
 double Hash_LoadFactor(table*);
 
-void Hash_Print(table*);
-void Hash_PrintSearchLength(table*, const int array[], int size);
+void Hash_Print(table*, bool ignoreEmptyBuckets);
 
 #endif
