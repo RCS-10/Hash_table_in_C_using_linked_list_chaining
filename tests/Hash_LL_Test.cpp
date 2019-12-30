@@ -12,7 +12,7 @@ TEST_GROUP(None)
 	
   	void setup()
   	{
-		CHECK(Hash_Create(&ht, 100));
+		CHECK(Hash_Create(&ht, 100, true));
 		CHECK(ht);
   	}
 
@@ -26,22 +26,22 @@ TEST_GROUP(None)
 #if 1
 TEST(None, CreateFailsWhenPassingNullPointer)
 {
-	CHECK_FALSE(Hash_Create(NULL, 100));
+	CHECK_FALSE(Hash_Create(NULL, 100, true));
 }
 #endif
 #if 1
 TEST(None, CreateFailsWhenPassingZeroOrNegativeSize)
 {
 	hashTable *t;
-	CHECK_FALSE(Hash_Create(&t, 0));
-	CHECK_FALSE(Hash_Create(&t, -1));
+	CHECK_FALSE(Hash_Create(&t, 0, true));
+	CHECK_FALSE(Hash_Create(&t, -1, true));
 }
 #endif
 #if 1
 TEST(None, CreateDoesNotCrash)
 {
 	hashTable *t;
-	CHECK(Hash_Create(&t, 100));
+	CHECK(Hash_Create(&t, 100, true));
 	Hash_Destroy(&t);
 }
 #endif
@@ -49,7 +49,7 @@ TEST(None, CreateDoesNotCrash)
 TEST(None, CreateAndDestroyAssignsToPointer)
 {
 	hashTable *t;
-	CHECK(Hash_Create(&t, 100));
+	CHECK(Hash_Create(&t, 100, true));
 	CHECK(t);
 	Hash_Destroy(&t);
 	POINTERS_EQUAL(NULL, t);
@@ -66,10 +66,10 @@ TEST(None, NoValuesAndNoBucketsOnCreation)
 TEST(None, MaxBucketsDeterminedByInitialization)
 {
 	hashTable *t;
-	CHECK(Hash_Create(&t, 10));
+	CHECK(Hash_Create(&t, 10, true));
 	LONGS_EQUAL(10, Hash_BucketsMax(t));
 	Hash_Destroy(&t);
-	CHECK(Hash_Create(&t, 10000));
+	CHECK(Hash_Create(&t, 10000, true));
 	LONGS_EQUAL(10000, Hash_BucketsMax(t));
 	Hash_Destroy(&t);
 }
@@ -100,7 +100,7 @@ TEST_GROUP(One)
 	
   	void setup()
   	{
-		CHECK(Hash_Create(&ht, 100));
+		CHECK(Hash_Create(&ht, 100, true));
 		CHECK(ht);
   	}
 
@@ -173,14 +173,14 @@ TEST(One, LoadFactorIsBucketsUsedDividedByBucketsMax)
 #endif
 
 
-TEST_GROUP(Many)
+TEST_GROUP(Many_Unique)
 {
   	hashTable *ht;
   	const int SIZE = 100;
 	
   	void setup()
   	{
-		CHECK(Hash_Create(&ht, SIZE));
+		CHECK(Hash_Create(&ht, SIZE, true));
 		CHECK(ht);
   	}
 
@@ -266,7 +266,7 @@ TEST_GROUP(Many)
 };
 
 #if 1
-TEST(Many, CanFillAllBuckets)
+TEST(Many_Unique, CanFillAllBuckets)
 {
 	insertMany(SIZE, ASCENDING);
 	existsMany(SIZE, ASCENDING);
@@ -276,7 +276,7 @@ TEST(Many, CanFillAllBuckets)
 }
 #endif
 #if 1
-TEST(Many, DuplicatesRejected)
+TEST(Many_Unique, DuplicatesRejected)
 {
 	insertMany(SIZE, ASCENDING);
 	existsMany(SIZE, DESCENDING);
@@ -287,7 +287,7 @@ TEST(Many, DuplicatesRejected)
 }
 #endif
 #if 1
-TEST(Many, CanInsertTwiceAsManyValuesAsThereAreBuckets)
+TEST(Many_Unique, CanInsertTwiceAsManyValuesAsThereAreBuckets)
 {
 	insertMany(2 * SIZE, ASCENDING);
 	LONGS_EQUAL(2 * SIZE, Hash_ValuesStored(ht));
@@ -296,7 +296,7 @@ TEST(Many, CanInsertTwiceAsManyValuesAsThereAreBuckets)
 }
 #endif
 #if 1
-TEST(Many, CanFillAndDeleteAllBuckets)
+TEST(Many_Unique, CanFillAndDeleteAllBuckets)
 {
 	insertMany(SIZE, ASCENDING);
 	existsMany(SIZE, ASCENDING);
@@ -311,7 +311,7 @@ TEST(Many, CanFillAndDeleteAllBuckets)
 }
 #endif
 #if 1
-TEST(Many, CanFillAndDeleteAllBucketsRepeatedly)
+TEST(Many_Unique, CanFillAndDeleteAllBucketsRepeatedly)
 {
 	for(int i = 0; i < 10; ++i)
 	{
@@ -327,7 +327,7 @@ TEST(Many, CanFillAndDeleteAllBucketsRepeatedly)
 }
 #endif
 #if 1
-TEST(Many, HowNotToMakeATestCase)
+TEST(Many_Unique, HowNotToMakeATestCase)
 {
 	for(int i = 0; i < 3 * SIZE; i += 2) 		// Add even values
 	{
@@ -387,7 +387,71 @@ TEST(Many, HowNotToMakeATestCase)
 #endif
 
 
-TEST_GROUP(Print) // Not using spy - visual inspection only
+TEST_GROUP(Many_NonUnique)
+{
+  	hashTable *ht;
+  	const int SIZE = 100;
+	
+  	void setup()
+  	{
+		CHECK(Hash_Create(&ht, SIZE, false));
+		CHECK(ht);
+  	}
+
+  	void teardown()
+  	{
+		Hash_Destroy(&ht);
+		POINTERS_EQUAL(NULL, ht);
+  	}
+};
+#if 1
+TEST(Many_NonUnique, CanInsertTheSameValueTwice)
+{
+	CHECK(Hash_Insert(ht, 1));
+	CHECK(Hash_Insert(ht, 1));
+
+	LONGS_EQUAL(2, Hash_Exists(ht, 1));
+	LONGS_EQUAL(2, Hash_ValuesStored(ht));
+	LONGS_EQUAL(1, Hash_BucketsUsed(ht));
+}
+#endif
+#if 1
+TEST(Many_NonUnique, CanInsertAndRemoveDuplicates)
+{
+	CHECK(Hash_Insert(ht, 1));
+	CHECK(Hash_Insert(ht, 1));
+	CHECK(Hash_Insert(ht, 1));
+
+	LONGS_EQUAL(3, Hash_Exists(ht, 1));
+	CHECK(Hash_Remove(ht, 1));
+	LONGS_EQUAL(2, Hash_Exists(ht, 1));
+	CHECK(Hash_Remove(ht, 1));
+	LONGS_EQUAL(1, Hash_Exists(ht, 1));
+	CHECK(Hash_Remove(ht, 1));
+	LONGS_EQUAL(0, Hash_Exists(ht, 1));
+}
+#endif
+#if 1
+TEST(Many_NonUnique, CanInsertManyDuplicateValues)
+{
+	int i, j;
+	const int duplicates = 100;
+
+	for(i = 0; i < SIZE; ++i)
+	{
+		for(j = 0; j < duplicates; j++)
+		{
+			CHECK(Hash_Insert(ht, i));
+		}
+		LONGS_EQUAL(duplicates, Hash_Exists(ht, i));
+		LONGS_EQUAL((i + 1) * duplicates, Hash_ValuesStored(ht));
+		LONGS_EQUAL(i + 1, Hash_BucketsUsed(ht));
+	}
+}
+#endif
+
+ // Manual tests - not using output spy
+TEST_GROUP(Print)
 {
   	hashTable *ht;
 
@@ -395,7 +459,7 @@ TEST_GROUP(Print) // Not using spy - visual inspection only
 	
   	void setup()
   	{
-		CHECK(Hash_Create(&ht, SIZE));
+		CHECK(Hash_Create(&ht, SIZE, true));
 		CHECK(ht);
   	}
 
@@ -460,7 +524,7 @@ TEST(Print, EvenBucketsFilled)
 	Hash_Print(ht, false);
 }
 #endif
-#if 1
+#if 0
 TEST(Print, EveryBucketFilledWithTenValues)
 {
 	for(int i = 0; i < 10 * SIZE; ++i)
@@ -469,5 +533,71 @@ TEST(Print, EveryBucketFilledWithTenValues)
 	}
 
 	Hash_Print(ht, true);
+}
+#endif
+#if 0
+TEST(Print, InsertSomeRemoveSomeDuplicates)
+{
+	hashTable *t;
+	CHECK(Hash_Create(&t, 10, false));
+	Hash_Print(t, true);
+	Hash_Insert(t, 1);
+	Hash_Insert(t, 1);
+	Hash_Insert(t, 1);
+	Hash_Insert(t, 1);
+	Hash_Print(t, true);
+	Hash_Remove(t, 1);
+	Hash_Print(t, true);
+	Hash_Remove(t, 1);
+	Hash_Print(t, true);
+	Hash_Remove(t, 1);
+	Hash_Print(t, true);
+	Hash_Remove(t, 1);
+	Hash_Print(t, true);
+	Hash_Destroy(&t);
+}
+#endif
+#if 0
+TEST(Print, EveryBucketFilledWithTenIdenticalValues)
+{
+	hashTable *t;
+	CHECK(Hash_Create(&t, SIZE, false));
+	const int duplicates = 10;
+
+	for(int i = 0; i < SIZE; i++)
+	{
+		for(int j = 0; j < duplicates; j++)
+		{
+			CHECK(Hash_Insert(t, i));
+		}
+	}
+
+	Hash_Print(t, false);
+	Hash_Destroy(&t);
+}
+#endif
+#if 1
+TEST(Print, UniqueVSNonunique)
+{
+	hashTable *unique, *nonunique;
+	CHECK(Hash_Create(&unique, SIZE, true));
+	CHECK(Hash_Create(&nonunique, SIZE, false));
+
+	for(int i = 0; i < 2 * SIZE; i++)
+	{
+		for(int j = 0; j < 5; j++)
+		{
+			Hash_Insert(unique, i);
+			Hash_Insert(nonunique, i);
+		}
+	}
+
+	printf("\nUnique - duplicate values rejected:\n");
+	Hash_Print(unique, false);
+	printf("NonUnique - duplicate values accepted:\n");
+	Hash_Print(nonunique, false);
+
+	Hash_Destroy(&unique);
+	Hash_Destroy(&nonunique);
 }
 #endif

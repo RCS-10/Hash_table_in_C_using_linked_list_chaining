@@ -5,6 +5,7 @@
 typedef struct node
 {
 	int value;
+	size_t count;
 	struct node *next;
 }node;
 
@@ -14,9 +15,10 @@ typedef struct hashTable
 	size_t valuesStored;
 	size_t bucketsUsed;
 	size_t bucketsMax;
+	bool unique;
 }hashTable;
 
-bool Hash_Create(table **ht, int buckets)
+bool Hash_Create(table **ht, int buckets, bool unique)
 {
 	if(!ht || buckets < 1)
 	{
@@ -30,6 +32,7 @@ bool Hash_Create(table **ht, int buckets)
 	}
 
 	newTable->bucketsMax = buckets;
+	newTable->unique = unique;
 
 	node **newArray = calloc(newTable->bucketsMax, sizeof(node*));
 	if(!newArray)
@@ -75,16 +78,16 @@ void Hash_Destroy(table **ht)
 	*ht = NULL;
 }
 
-enum {FIND, INSERT, DELETE};
+enum {FIND, INSERT, REMOVE};
 
-static bool find(table *ht, int value, int action)
+static size_t find(table *ht, int value, int action)
 {
 	if(!ht)
 	{
 		return false;
 	}
 
-	assert(action == FIND || action == INSERT || action == DELETE);
+	assert(action == FIND || action == INSERT || action == REMOVE);
 
 	size_t ind = value % ht->bucketsMax; // Calculate hash
 
@@ -101,14 +104,38 @@ static bool find(table *ht, int value, int action)
 	{
 		if(FIND == action)
 		{
-			return true; // Value found
+			if(ht->unique)
+			{
+				return 1;
+			}
+
+			return curr->count;
 		}
 		else if(INSERT == action)
 		{
-			return false; // Duplicate value, do not insert
+			curr->count++;
+
+			if(ht->unique)
+			{
+				return 0;
+			}
+
+			ht->valuesStored++;
+			return 1;
 		}
-		else // Delete value
+		else
 		{
+			curr->count--;
+			ht->valuesStored--;
+
+			assert(curr->count >= 0);
+			assert(ht->valuesStored >= 0);
+
+			if(!ht->unique && curr->count > 0)
+			{
+				return 1;
+			}
+
 			node *deleteMe = curr;
 			if(prev == curr) // First entry in array
 			{
@@ -124,23 +151,23 @@ static bool find(table *ht, int value, int action)
 			}
 
 			free(deleteMe);
-			ht->valuesStored--;
 
-			return true;
+			return 1;
 		}
 	}
 
-	if(FIND == action || DELETE == action)
+	if(FIND == action || REMOVE == action)
 	{
-		return false; // Value not found
+		return 0; // Value not found
 	}
 
 	assert(action == INSERT);
 
 	node *newNode = calloc(1, sizeof(node));
 	if(!newNode)
-		return false;
+		return 0;
 	newNode->value = value;
+	newNode->count = 1;
 
 	assert(curr == NULL || value < curr->value);
 
@@ -160,7 +187,7 @@ static bool find(table *ht, int value, int action)
 
 	ht->valuesStored++;
 
-	return true;
+	return 1;
 }
 
 bool Hash_Insert(table *ht, int value)
@@ -168,14 +195,14 @@ bool Hash_Insert(table *ht, int value)
 	return find(ht, value, INSERT);
 }
 
-bool Hash_Exists(table *ht, int value)
+size_t Hash_Exists(table *ht, int value)
 {
 	return find(ht, value, FIND);
 }
 
 bool Hash_Remove(table *ht, int value)
 {
-	return find(ht, value, DELETE);
+	return find(ht, value, REMOVE);
 }
 
 size_t Hash_ValuesStored(table *ht)
@@ -242,7 +269,11 @@ void Hash_Print(table *ht, bool ignoreEmptyBuckets)
 			node *curr = array[i];
 			while(curr)
 			{
-				printf("%d ", curr->value);
+				size_t count = ht->unique ? 1 : curr->count;
+				for(size_t i = 0; i < count; ++i)
+				{
+					printf("%d ", curr->value);
+				}
 				curr = curr->next;
 			}
 			printf("\n");
