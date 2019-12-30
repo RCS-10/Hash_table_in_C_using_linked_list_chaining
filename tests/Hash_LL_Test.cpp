@@ -6,7 +6,7 @@ extern "C"
 #include "CppUTest/TestHarness.h"
 // https://github.com/cpputest/cpputest
 
-TEST_GROUP(ASCENDING)
+TEST_GROUP(None)
 {
   	hashTable *ht;
 	
@@ -24,13 +24,13 @@ TEST_GROUP(ASCENDING)
 };
 
 #if 1
-TEST(ASCENDING, CreateFailsWhenPassingNullPointer)
+TEST(None, CreateFailsWhenPassingNullPointer)
 {
 	CHECK_FALSE(Hash_Create(NULL, 100));
 }
 #endif
 #if 1
-TEST(ASCENDING, CreateFailsWhenPassingZeroOrNegativeSize)
+TEST(None, CreateFailsWhenPassingZeroOrNegativeSize)
 {
 	hashTable *t;
 	CHECK_FALSE(Hash_Create(&t, 0));
@@ -38,7 +38,7 @@ TEST(ASCENDING, CreateFailsWhenPassingZeroOrNegativeSize)
 }
 #endif
 #if 1
-TEST(ASCENDING, CreateDoesNotCrash)
+TEST(None, CreateDoesNotCrash)
 {
 	hashTable *t;
 	CHECK(Hash_Create(&t, 100));
@@ -46,7 +46,7 @@ TEST(ASCENDING, CreateDoesNotCrash)
 }
 #endif
 #if 1
-TEST(ASCENDING, CreateAndDestroyAssignsToPointer)
+TEST(None, CreateAndDestroyAssignsToPointer)
 {
 	hashTable *t;
 	CHECK(Hash_Create(&t, 100));
@@ -56,14 +56,14 @@ TEST(ASCENDING, CreateAndDestroyAssignsToPointer)
 }
 #endif
 #if 1
-TEST(ASCENDING, NoValuesAndNoBucketsOnCreation)
+TEST(None, NoValuesAndNoBucketsOnCreation)
 {
 	LONGS_EQUAL(0, Hash_ValuesStored(ht));
 	LONGS_EQUAL(0, Hash_BucketsUsed(ht));
 }
 #endif
 #if 1
-TEST(ASCENDING, MaxBucketsDeterminedByInitialization)
+TEST(None, MaxBucketsDeterminedByInitialization)
 {
 	hashTable *t;
 	CHECK(Hash_Create(&t, 10));
@@ -75,13 +75,13 @@ TEST(ASCENDING, MaxBucketsDeterminedByInitialization)
 }
 #endif
 #if 1
-TEST(ASCENDING, LoadFactorIsZeroOnCreation)
+TEST(None, LoadFactorIsZeroOnCreation)
 {
 	DOUBLES_EQUAL(0, Hash_LoadFactor(ht), 0.01);
 }
 #endif
 #if 1
-TEST(ASCENDING, FunctionsReturnZeroWhenPassedNull)
+TEST(None, FunctionsReturnZeroWhenPassedNull)
 {
 	CHECK_FALSE(Hash_Insert(NULL, 1));
 	CHECK_FALSE(Hash_Exists(NULL, 1));
