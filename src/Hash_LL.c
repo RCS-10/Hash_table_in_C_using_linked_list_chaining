@@ -80,6 +80,8 @@ void Hash_Destroy(table **ht)
 
 enum {FIND, INSERT, REMOVE};
 
+#define abs(x) ((x) < 0 ? -(x) : (x))
+
 static size_t find(table *ht, int value, int action)
 {
 	if(!ht)
@@ -89,7 +91,7 @@ static size_t find(table *ht, int value, int action)
 
 	assert(action == FIND || action == INSERT || action == REMOVE);
 
-	size_t ind = value % ht->bucketsMax; // Calculate hash
+	size_t ind = abs(value) % ht->bucketsMax; // Calculate hash
 
 	node *curr = ht->array[ind];
 	node *prev = curr;
